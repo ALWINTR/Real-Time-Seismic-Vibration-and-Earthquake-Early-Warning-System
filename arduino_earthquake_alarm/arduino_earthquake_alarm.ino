@@ -1,5 +1,5 @@
 /*
- * ARDUINO NANO EARTHQUAKE MONITORING & EARLY WARNING SYSTEM
+ * ARDUINO NANO EARTHQUAKE MONITORING & EARLY WARNING SYSTEM (U8g2 OLED Library)
  * 
  * Hardware Connections:
  * - MPU6050: VCC->5V, GND->GND, SCL->A5, SDA->A4
@@ -7,16 +7,15 @@
  * - Piezo Buzzer: Pin 8 (PWM / Active)
  * - Red Alarm LED: Pin 7
  * - Green Safe LED: Pin 6
+ * 
+ * Library Requirement: U8g2 by Oliver Kraus (U8g2lib.h)
  */
 
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <U8g2lib.h>
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+// Initialize 0.96" SSD1306 128x64 I2C display using U8g2 Full Framebuffer Driver
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 const int MPU_ADDR = 0x68; // MPU6050 I2C address
 const int BUZZER_PIN = 8;
@@ -38,20 +37,14 @@ void setup() {
   digitalWrite(RED_LED_PIN, LOW);
   digitalWrite(BUZZER_PIN, LOW);
 
-  // Initialize SSD1306 OLED
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println(F("OLED Allocation Failed"));
-  } else {
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setTextColor(SSD1306_WHITE);
-    display.setCursor(10, 15);
-    display.println(F("SEISMIC DETECTOR"));
-    display.setCursor(25, 35);
-    display.println(F("INITIALIZING..."));
-    display.display();
-    delay(1000);
-  }
+  // Initialize U8g2 OLED
+  u8g2.begin();
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_ncenB08_tr);
+  u8g2.drawStr(15, 20, "SEISMIC GUARD");
+  u8g2.drawStr(10, 42, "INITIALIZING...");
+  u8g2.sendBuffer();
+  delay(1000);
 
   // Initialize MPU6050
   Wire.begin();
@@ -86,62 +79,57 @@ void loop() {
   float richter = (pga > 0.02) ? (2.0 + (log10(pga * 10.0 + 1.0) * 2.8)) : 0.0;
   if (richter > 9.0) richter = 9.0;
 
-  String status = "SAFE";
+  char pgaStr[12];
+  char richterStr[12];
+  dtostrf(pga, 5, 3, pgaStr);
+  dtostrf(richter, 4, 1, richterStr);
+
+  String statusStr = "SAFE";
 
   if (pga >= CRITICAL_PGA) {
-    status = "EARTHQUAKE ALERT";
+    statusStr = "EARTHQUAKE ALERT!";
     digitalWrite(RED_LED_PIN, HIGH);
     digitalWrite(GREEN_LED_PIN, LOW);
     
-    // Pulsing Alarm Tone
+    // Pulsing 2kHz High-Decibel Alarm Tone
     tone(BUZZER_PIN, 2000, 100);
   } else if (pga >= WARNING_PGA) {
-    status = "SEISMIC ACTIVITY";
+    statusStr = "SEISMIC ACTIVITY";
     digitalWrite(RED_LED_PIN, HIGH);
     digitalWrite(GREEN_LED_PIN, HIGH);
     noTone(BUZZER_PIN);
   } else {
-    status = "SAFE";
+    statusStr = "SAFE";
     digitalWrite(RED_LED_PIN, LOW);
     digitalWrite(GREEN_LED_PIN, HIGH);
     noTone(BUZZER_PIN);
   }
 
-  // Update OLED Display
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setCursor(0, 0);
-  display.println(F("EARTHQUAKE MONITOR"));
-  display.drawLine(0, 10, 128, 10, SSD1306_WHITE);
+  // Render on SSD1306 OLED using U8g2 Library
+  u8g2.clearBuffer();
+  
+  // Header Title & Frame
+  u8g2.setFont(u8g2_font_ncenB08_tr);
+  u8g2.drawStr(8, 11, "EARTHQUAKE MONITOR");
+  u8g2.drawHLine(0, 14, 128);
 
-  display.setCursor(0, 16);
-  display.print(F("PGA: "));
-  display.print(pga, 3);
-  display.println(F(" g"));
+  // Line 1: PGA Acceleration
+  u8g2.setFont(u8g2_font_6x10_tr);
+  u8g2.drawStr(0, 28, "PGA:");
+  u8g2.drawStr(42, 28, pgaStr);
+  u8g2.drawStr(90, 28, "g");
 
-  display.setCursor(0, 28);
-  display.print(F("Richter: M "));
-  display.println(richter, 1);
+  // Line 2: Richter Scale Magnitude
+  u8g2.drawStr(0, 42, "Richter:");
+  u8g2.drawStr(55, 42, "M ");
+  u8g2.drawStr(72, 42, richterStr);
 
-  display.setCursor(0, 42);
-  display.print(F("STATUS: "));
-  display.println(status);
-  display.display();
+  // Line 3: System Alert Status
+  u8g2.setFont(u8g2_font_ncenB08_tr);
+  u8g2.drawStr(0, 59, "STATUS:");
+  u8g2.drawStr(55, 59, statusStr.c_str());
 
-  // Stream JSON telemetry to Serial Port (115200 baud)
-  Serial.print("{\"ax\":");
-  Serial.print(ax, 3);
-  Serial.print(",\"ay\":");
-  Serial.print(ay, 3);
-  Serial.print(",\"az\":");
-  Serial.print(az, 3);
-  Serial.print(",\"pga\":");
-  Serial.print(pga, 3);
-  Serial.print(",\"richter\":");
-  Serial.print(richter, 1);
-  Serial.print(",\"status\":\"");
-  Serial.print(status);
-  Serial.println("\"}");
+  u8g2.sendBuffer();
 
   delay(100); // 10 Hz sampling rate
 }

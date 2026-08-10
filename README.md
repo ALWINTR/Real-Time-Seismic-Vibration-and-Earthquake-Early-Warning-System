@@ -1,6 +1,6 @@
-# Arduino Nano Earthquake Early Warning & Seismic Alarm System
+# Arduino Nano Earthquake Early Warning System (U8g2 OLED Driver)
 
-A standalone **Embedded C++ Earthquake Detection and Alarm System** running on an **Arduino Nano (ATmega328P)** using an **MPU6050 6-DOF Accelerometer**, **0.96" SSD1306 OLED Display**, **Piezo Buzzer Alarm**, and **Red/Green Hazard Status LEDs**.
+A 100% C++ **Embedded Earthquake Detection & Early Warning System** running on an **Arduino Nano (ATmega328P)** using an **MPU6050 6-DOF Accelerometer**, **0.96" SSD1306 OLED Display (U8g2 Library)**, **Piezo Buzzer Alarm**, and **Red/Green Hazard Status LEDs**.
 
 ---
 
@@ -19,7 +19,7 @@ A standalone **Embedded C++ Earthquake Detection and Alarm System** running on a
 | | SDA | `A4` | Shared I2C Data |
 | **Piezo Buzzer** | Positive (+) | `Digital Pin 8` | PWM Audio Alarm Signal |
 | | Negative (-) | `GND` | Ground |
-| **Red Alarm LED** | Anode (+) | `Digital Pin 7` | Series 220Ω Resistor to Pin 7 |
+| **Red Hazard LED** | Anode (+) | `Digital Pin 7` | Series 220Ω Resistor to Pin 7 |
 | | Cathode (-) | `GND` | Ground |
 | **Green Safe LED** | Anode (+) | `Digital Pin 6` | Series 220Ω Resistor to Pin 6 |
 | | Cathode (-) | `GND` | Ground |
@@ -48,9 +48,8 @@ A standalone **Embedded C++ Earthquake Detection and Alarm System** running on a
 
 ## Required Arduino IDE Libraries
 
-Install the following official libraries via Arduino IDE **Library Manager** (`Ctrl+Shift+I`):
-1. **Adafruit SSD1306** (`Adafruit_SSD1306.h`)
-2. **Adafruit GFX Library** (`Adafruit_GFX.h`)
+Install the following official library via Arduino IDE **Library Manager** (`Ctrl+Shift+I`):
+- **U8g2** by Oliver Kraus (`U8g2lib.h`)
 
 ---
 
@@ -78,7 +77,7 @@ Install the following official libraries via Arduino IDE **Library Manager** (`C
 ```
 earthquake_monitoring_system/
 ├── arduino_earthquake_alarm/
-│   └── arduino_earthquake_alarm.ino   # Main C++ Firmware Sketch
+│   └── arduino_earthquake_alarm.ino   # Arduino C++ Sketch with U8g2 Driver
 ├── WIRING_DIAGRAM.md                  # Hardware Pinout Schematic
 └── README.md                          # Documentation
 ```
