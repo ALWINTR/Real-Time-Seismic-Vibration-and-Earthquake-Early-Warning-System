@@ -1,83 +1,92 @@
-# Arduino Nano Earthquake Early Warning System (U8g2 OLED Driver)
+# 🌍 Real-Time Earthquake Monitoring & Seismic Early Warning System
 
-A 100% C++ **Embedded Earthquake Detection & Early Warning System** running on an **Arduino Nano (ATmega328P)** using an **MPU6050 6-DOF Accelerometer**, **0.96" SSD1306 OLED Display (U8g2 Library)**, **Piezo Buzzer Alarm**, and **Red/Green Hazard Status LEDs**.
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-00f0ff?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ALWINTR/earthquake-monitoring-system)
+[![Developer](https://img.shields.io/badge/Developer-Alwin_T_R-0284c7?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/alwintr)
+[![Platform](https://img.shields.io/badge/Platform-Arduino_Nano_%26_ADXL335-38bdf8?style=for-the-badge&logo=arduino&logoColor=white)](https://github.com/ALWINTR)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
----
-
-## Component Hardware List & Pinout
-
-| Component | Pin Name | Arduino Nano Connection | Notes |
-|---|---|---|---|
-| **Arduino Nano** | - | Microcontroller Board | 5V Operating Voltage |
-| **MPU6050 Accelerometer** | VCC | `5V` | Sensor Power |
-| | GND | `GND` | Ground |
-| | SCL | `A5` | I2C Clock |
-| | SDA | `A4` | I2C Data |
-| **SSD1306 OLED (128x64)** | VCC | `5V` | Display Power |
-| | GND | `GND` | Ground |
-| | SCL | `A5` | Shared I2C Clock |
-| | SDA | `A4` | Shared I2C Data |
-| **Piezo Buzzer** | Positive (+) | `Digital Pin 8` | PWM Audio Alarm Signal |
-| | Negative (-) | `GND` | Ground |
-| **Red Hazard LED** | Anode (+) | `Digital Pin 7` | Series 220Ω Resistor to Pin 7 |
-| | Cathode (-) | `GND` | Ground |
-| **Green Safe LED** | Anode (+) | `Digital Pin 6` | Series 220Ω Resistor to Pin 6 |
-| | Cathode (-) | `GND` | Ground |
+A high-sensitivity real-time seismic vibration monitoring and early warning system powered by Arduino and an ADXL335 3-Axis Analog Accelerometer / MPU6050, featuring 10-bit ADC vector magnitude sampling, dynamic baseline calibration, low-pass digital noise filtering, OLED waveform rendering, and acoustic alarm sirens.
 
 ---
 
-## Circuit Schematic Overview
+## 📌 Seismic Detection Theory & Vector Model
 
-```
-                      +-------------------+
-                      |   ARDUINO NANO    |
-                      |                   |
-   5V ----------------| VCC               |
-  GND ----------------| GND               |
-                      |                   |
-   A4 (SDA) ----------| SDA  (MPU6050 &   |
-   A5 (SCL) ----------| SCL   OLED Display)|
-                      |                   |
-   Pin 8 -------------| PWM -> Piezo Buzzer|---> GND
-   Pin 7 -------------| [220Ω] -> Red LED  |---> GND
-   Pin 6 -------------| [220Ω] -> Green LED |---> GND
-                      +-------------------+
-```
+Seismic ground motion introduces acceleration vectors across three spatial orthogonal axes (\(X, Y, Z\)). The total instantaneous gravitational and inertial vector magnitude \( |A| \) is given by:
+
+$$\|A\| = \sqrt{A_x^2 + A_y^2 + A_z^2}$$
+
+In a stationary resting state, \( |A| = 1.0	ext{g} \) (gravitational constant). When seismic P-waves (primary compressive waves) or destructive S-waves (shear waves) arrive, the net dynamic acceleration delta \( \Delta A \) spikes:
+
+$$\Delta A = | \|A\| - 1.0	ext{g} |$$
+
+When \( \Delta A > 	ext{Threshold}_{	ext{Seismic}} \), the early warning alarm triggers instantaneously.
 
 ---
 
-## Required Arduino IDE Libraries
+## ⚙️ Hardware Bill of Materials (BOM)
 
-Install the following official library via Arduino IDE **Library Manager** (`Ctrl+Shift+I`):
-- **U8g2** by Oliver Kraus (`U8g2lib.h`)
-
----
-
-## System Operational States
-
-- **NOMINAL SAFE STATE** ($\text{PGA} < 0.15g$):
-  - Green LED: **ON**
-  - Red LED & Buzzer: **OFF**
-  - OLED Display: Displays `PGA: 0.000 g`, `Richter: M 0.0`, `STATUS: SAFE`.
-
-- **WARNING STATE** ($0.15g \le \text{PGA} < 0.35g$):
-  - Green LED & Red LED: **ON**
-  - OLED Display: Displays `STATUS: SEISMIC ACTIVITY`.
-
-- **EARTHQUAKE ALERT STATE** ($\text{PGA} \ge 0.35g$):
-  - Green LED: **OFF**
-  - Red LED: **HIGH**
-  - Piezo Buzzer: **PULSING 2kHz HIGH-DECIBEL ALARM TONE**
-  - OLED Display: Displays `STATUS: EARTHQUAKE ALERT!`.
+| Component | Technical Specification | Function |
+| :--- | :--- | :--- |
+| **Microcontroller** | Arduino Nano (ATmega328P, 16MHz) | High-speed ADC oversampling & alert FSM |
+| **Accelerometer** | ADXL335 (±3g Tri-Axial Analog Sensor) | Dynamic seismic acceleration sensing |
+| **Visual Display** | SSD1306 0.96" I2C OLED Display (128x64) | Real-time waveform & Richter magnitude display |
+| **Acoustic Alarm** | 5V High-Decibel Active Piezo Siren | Immediate emergency audible warning |
+| **Status Indicators** | Tri-Color RGB Status LED Array | Green (Normal), Yellow (Tremor), Red (Severe) |
+| **Power Input** | 9V DC / USB 5V Regulated Rail | Low-noise analog power rail |
 
 ---
 
-## Project Directory
+## 🔌 Circuit Pinout Table
 
-```
-earthquake_monitoring_system/
-├── arduino_earthquake_alarm/
-│   └── arduino_earthquake_alarm.ino   # Arduino C++ Sketch with U8g2 Driver
-├── WIRING_DIAGRAM.md                  # Hardware Pinout Schematic
-└── README.md                          # Documentation
-```
+| Sensor / Module Pin | Arduino Nano Pin | Signal Type | Description |
+| :--- | :--- | :--- | :--- |
+| **ADXL335 X_OUT** | Analog Pin A0 | 10-Bit ADC In | X-Axis horizontal acceleration |
+| **ADXL335 Y_OUT** | Analog Pin A1 | 10-Bit ADC In | Y-Axis horizontal acceleration |
+| **ADXL335 Z_OUT** | Analog Pin A2 | 10-Bit ADC In | Z-Axis vertical acceleration |
+| **OLED SDA** | Analog Pin A4 | I2C Data Bus | SSD1306 graphics datastream |
+| **OLED SCL** | Analog Pin A5 | I2C Clock Bus | SSD1306 serial clock |
+| **Piezo Siren (+)** | Digital Pin D8 | Digital Output | Emergency siren alarm trigger |
+| **LED Green (Normal)** | Digital Pin D11 | Digital Output | Ambient steady-state indicator |
+| **LED Red (Alarm)** | Digital Pin D12 | Digital Output | Seismic alert warning indicator |
+
+---
+
+## 🧠 Firmware Architecture & Filter Algorithms
+
+The Arduino firmware (`arduino_earthquake_alarm/arduino_earthquake_alarm.ino`) executes a 100Hz discrete sampling loop:
+1. **Oversampling & ADC Averaging**: Samples 16 consecutive ADC readings per channel to suppress high-frequency electrical noise.
+2. **Exponential Moving Average (EMA) Baseline**: Continuously updates the steady-state baseline reference to eliminate thermal drift:
+   $$B_k = lpha \cdot A_k + (1 - lpha) \cdot B_{k-1} \quad (lpha = 0.05)$$
+3. **Threshold Discrimination**:
+   - Level 0 (\( \Delta A < 0.08	ext{g} \)): Ambient Background Noise (Safe).
+   - Level 1 (\( 0.08	ext{g} \le \Delta A < 0.25	ext{g} \)): Minor Tremor / Micro-Seismic Activity.
+   - Level 2 (\( \Delta A \ge 0.25	ext{g} \)): Major Earthquake Warning -> Continuous Siren.
+
+---
+
+## 🚀 Installation & Calibration Guide
+
+1. Clone repository:
+   ```bash
+   git clone https://github.com/ALWINTR/earthquake-monitoring-system.git
+   ```
+2. Open in Arduino IDE.
+3. Install the **U8g2** OLED graphics library:
+   - In Arduino IDE -> Library Manager -> Search `U8g2` -> Install.
+4. Mount the ADXL335 sensor rigidly to a flat horizontal surface to ensure accurate ground coupling.
+5. Upload code to **Arduino Nano** at 115200 baud.
+
+---
+
+## 👨‍💻 Author
+
+**Alwin T R** — Robotics & Automation Engineer  
+- 💼 LinkedIn: [linkedin.com/in/alwintr](https://www.linkedin.com/in/alwintr)  
+- 🌌 Portfolio: [alwintr.github.io](https://alwintr.github.io)  
+- 💻 GitHub: [github.com/ALWINTR](https://github.com/ALWINTR)
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
